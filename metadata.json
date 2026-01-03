@@ -1,0 +1,5 @@
+{
+  "name": "Kaleidoscope",
+  "description": "A professional-grade generative video platform that transforms text, images, and video into high-fidelity video clips using Gemini Veo models.",
+  "requestFramePermissions": []
+}
