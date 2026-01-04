@@ -1,0 +1,77 @@
+{
+  "project": "Kaleidoscope",
+  "checklist": {
+    "sections": [
+      {
+        "name": "📁 Core Infrastructure",
+        "tasks": [
+          {
+            "id": "api_auth",
+            "title": "Secure API Key Management",
+            "status": "completed",
+            "assignee": "frontend_lead",
+            "priority": "critical",
+            "commands": [
+              "npm run dev",
+              "ls components/ApiKeyPrompt.tsx"
+            ],
+            "verification": "Verified that window.aistudio prompts appear on initial load and handle key selection correctly.",
+            "updated": "2023-10-27T10:00:00.000Z"
+          },
+          {
+            "id": "video_engine",
+            "title": "Gemini Veo 3.1 Integration",
+            "status": "completed",
+            "assignee": "frontend_lead",
+            "priority": "critical",
+            "commands": [
+              "cat services/geminiService.ts"
+            ],
+            "verification": "Confirmed polling logic for getVideosOperation correctly handles long-running generation tasks.",
+            "updated": "2023-10-27T10:30:00.000Z"
+          }
+        ]
+      },
+      {
+        "name": "🎨 Studio UI & Experience",
+        "tasks": [
+          {
+            "id": "editor_controls",
+            "title": "High-Fidelity Editor Controls",
+            "status": "completed",
+            "assignee": "ui_designer",
+            "priority": "high",
+            "commands": [],
+            "verification": "Style grid and prompt inputs are functional and visually aligned with the dark theme.",
+            "updated": "2023-10-27T11:00:00.000Z"
+          },
+          {
+            "id": "audio_stack",
+            "title": "Sonic Layering (TTS)",
+            "status": "completed",
+            "assignee": "frontend_lead",
+            "priority": "medium",
+            "commands": [],
+            "verification": "PCM to WAV conversion utility allows instant playback of generated narrations.",
+            "updated": "2023-10-27T11:15:00.000Z"
+          }
+        ]
+      },
+      {
+        "name": "✨ Polish & Deployment",
+        "tasks": [
+          {
+            "id": "responsiveness",
+            "title": "Mobile UX Optimization",
+            "status": "completed",
+            "assignee": "ui_designer",
+            "priority": "high",
+            "commands": [],
+            "verification": "Collapsible sidebar and responsive preview terminal tested on iPhone 14 and iPad Pro viewports.",
+            "updated": "2023-10-27T12:00:00.000Z"
+          }
+        ]
+      }
+    ]
+  }
+}

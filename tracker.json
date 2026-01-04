@@ -1,0 +1,106 @@
+{
+  "project_tracker": {
+    "name": "Kaleidoscope Frontend",
+    "version": "1.0",
+    "type": "executable_checklist",
+    "sections": [
+      {
+        "id": "infrastructure",
+        "title": "📁 Core Infrastructure & API",
+        "tasks": [
+          {
+            "id": "api_auth",
+            "title": "Secure API Key Management",
+            "description": "Implement window.aistudio key selection and persistence",
+            "status": "completed",
+            "assignee": "frontend_lead",
+            "priority": "critical",
+            "effort_hours": 6,
+            "dependencies": [],
+            "subtasks": [
+              { "id": "api_auth_1", "title": "Implement ApiKeyPrompt component", "status": "completed" },
+              { "id": "api_auth_2", "title": "Hook into window.aistudio.openSelectKey", "status": "completed" },
+              { "id": "api_auth_3", "title": "Handle API_KEY_RESET_REQUIRED error case", "status": "completed" }
+            ]
+          },
+          {
+            "id": "video_engine",
+            "title": "Gemini Veo 3.1 Integration",
+            "description": "Long-polling operation for high-fidelity video generation",
+            "status": "completed",
+            "assignee": "frontend_lead",
+            "priority": "critical",
+            "effort_hours": 12,
+            "dependencies": ["api_auth"],
+            "subtasks": [
+              { "id": "video_gen_1", "title": "Implement getVideosOperation polling loop", "status": "completed" },
+              { "id": "video_gen_2", "title": "Add image-to-video reference support", "status": "completed" },
+              { "id": "video_gen_3", "title": "Implement resolution-based tier constraints", "status": "completed" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ui_ux",
+        "title": "🎨 Studio UI & Experience",
+        "tasks": [
+          {
+            "id": "editor_controls",
+            "title": "High-Fidelity Editor Controls",
+            "description": "Style presets, negative prompts, and visual asset uploading",
+            "status": "completed",
+            "assignee": "ui_designer",
+            "priority": "high",
+            "effort_hours": 8,
+            "dependencies": ["infrastructure"],
+            "subtasks": [
+              { "id": "ui_1", "title": "Implement StyleGrid with visual thumbnails", "status": "completed" },
+              { "id": "ui_2", "title": "Create mobile-responsive sidebar for studio controls", "status": "completed" },
+              { "id": "ui_3", "title": "Add skeleton loading states for project cards", "status": "completed" }
+            ]
+          },
+          {
+            "id": "audio_stack",
+            "title": "Sonic Layering (TTS)",
+            "description": "Gemini 2.5 Flash TTS integration with raw PCM decoding",
+            "status": "completed",
+            "assignee": "frontend_lead",
+            "priority": "medium",
+            "effort_hours": 6,
+            "dependencies": ["api_auth"],
+            "subtasks": [
+              { "id": "audio_1", "title": "Implement pcmToWavUrl conversion utility", "status": "completed" },
+              { "id": "audio_2", "title": "Multi-speaker voice selection UI", "status": "completed" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "polish",
+        "title": "✨ Polish & Deployment",
+        "tasks": [
+          {
+            "id": "responsiveness",
+            "title": "Mobile UX Optimization",
+            "description": "Ensure studio controls are usable on tablet and mobile viewports",
+            "status": "completed",
+            "assignee": "ui_designer",
+            "priority": "high",
+            "effort_hours": 10,
+            "dependencies": ["editor_controls"],
+            "subtasks": [
+              { "id": "mobile_1", "title": "Implement collapsible sidebar for mobile", "status": "completed" },
+              { "id": "mobile_2", "title": "Touch-friendly playback controls", "status": "completed" }
+            ]
+          }
+        ]
+      }
+    ],
+    "metrics": {
+      "total_tasks": 5,
+      "completed_tasks": 5,
+      "completion_percentage": 100,
+      "estimated_remaining_hours": 0
+    }
+  }
+}
