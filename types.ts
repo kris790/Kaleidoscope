@@ -5,22 +5,37 @@ export enum UserTier {
   PRO = 'PRO'
 }
 
+export interface GroundingSource {
+  title: string;
+  uri: string;
+}
+
+export interface VideoClip {
+  id: string;
+  url: string;
+  prompt: string;
+  duration: number;
+  apiObject: any;
+  timestamp: number;
+}
+
 export interface Project {
   id: string;
   title: string;
   prompt: string;
+  enhancedPrompt?: string;
   negativePrompt?: string;
   audioPrompt?: string;
   selectedVoice?: string;
-  videoUrl?: string;
-  audioUrl?: string;
   thumbnailUrl?: string;
   createdAt: number;
-  duration: number;
   resolution: string;
   style: string;
   status: 'idle' | 'generating' | 'completed' | 'failed';
   tier: UserTier;
+  groundingSources?: GroundingSource[];
+  clips: VideoClip[]; // Support for multiple clips/extensions
+  audioUrl?: string;
 }
 
 export interface StylePreset {
@@ -37,23 +52,13 @@ export interface UserState {
   projects: Project[];
 }
 
-// Global declaration for AI Studio key management
 declare global {
-  /**
-   * AIStudio interface for managing API keys in the host environment.
-   * Defined globally to ensure compatibility with pre-configured types.
-   */
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
     openSelectKey: () => Promise<void>;
   }
 
   interface Window {
-    /**
-     * AI Studio global object for key management.
-     * Fix: Restored optional modifier to match the environment's base declaration 
-     * and resolve "All declarations of 'aistudio' must have identical modifiers" error.
-     */
     aistudio?: AIStudio;
   }
 }
