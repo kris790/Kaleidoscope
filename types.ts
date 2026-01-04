@@ -19,6 +19,11 @@ export interface VideoClip {
   timestamp: number;
 }
 
+export interface SpeakerConfig {
+  name: string;
+  voiceId: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -26,7 +31,10 @@ export interface Project {
   enhancedPrompt?: string;
   negativePrompt?: string;
   audioPrompt?: string;
+  isMultiSpeaker?: boolean;
+  speakers?: [SpeakerConfig, SpeakerConfig];
   selectedVoice?: string;
+  cameraMovement?: string;
   thumbnailUrl?: string;
   createdAt: number;
   resolution: string;
@@ -34,7 +42,7 @@ export interface Project {
   status: 'idle' | 'generating' | 'completed' | 'failed';
   tier: UserTier;
   groundingSources?: GroundingSource[];
-  clips: VideoClip[]; // Support for multiple clips/extensions
+  clips: VideoClip[]; 
   audioUrl?: string;
 }
 
@@ -44,6 +52,12 @@ export interface StylePreset {
   description: string;
   thumbnail: string;
   promptSuffix: string;
+}
+
+export interface CameraMovement {
+  id: string;
+  name: string;
+  prompt: string;
 }
 
 export interface UserState {

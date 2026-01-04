@@ -1,3 +1,4 @@
+
 {
   "project": "Kaleidoscope",
   "checklist": {
@@ -33,22 +34,32 @@
           {
             "id": "video_extension",
             "title": "Temporal Extension (7s Clips)",
-            "status": "in_progress",
+            "status": "completed",
             "assignee": "frontend_lead",
             "priority": "high",
             "commands": [],
-            "verification": "Implement video-to-video recursive generation logic.",
-            "updated": "2023-10-27T13:00:00.000Z"
+            "verification": "Recursive video-to-video generation implemented.",
+            "updated": "2025-05-15T13:00:00.000Z"
           },
           {
             "id": "search_grounding",
             "title": "Search-Grounded Visuals",
-            "status": "not_started",
+            "status": "completed",
             "assignee": "frontend_lead",
             "priority": "medium",
             "commands": [],
-            "verification": "Integrate googleSearch tool for factual prompt accuracy.",
-            "updated": "2023-10-27T13:00:00.000Z"
+            "verification": "Integrated googleSearch tool for factual prompt accuracy.",
+            "updated": "2025-05-15T13:00:00.000Z"
+          },
+          {
+            "id": "sonic_layering",
+            "title": "Sonic Layer Synthesis",
+            "status": "completed",
+            "assignee": "frontend_lead",
+            "priority": "medium",
+            "commands": [],
+            "verification": "Gemini 2.5 Flash TTS integration with raw PCM decoding.",
+            "updated": "2025-05-15T14:00:00.000Z"
           }
         ]
       }

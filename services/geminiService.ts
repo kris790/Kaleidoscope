@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
-import { UserTier, GroundingSource, VideoClip } from "../types";
+import { UserTier, GroundingSource, VideoClip, SpeakerConfig } from "../types";
 import { TIER_CONFIG } from "../constants";
 
 export class GeminiService {
@@ -88,7 +88,7 @@ export class GeminiService {
         id: Math.random().toString(36).substr(2, 9),
         url: URL.createObjectURL(blob),
         prompt: finalPrompt,
-        duration: 5, // Fast render is typically 5s
+        duration: 5, 
         apiObject: videoObject,
         timestamp: Date.now()
       };
@@ -143,7 +143,7 @@ export class GeminiService {
         id: Math.random().toString(36).substr(2, 9),
         url: URL.createObjectURL(blob),
         prompt: params.prompt,
-        duration: 7, // Extension is usually 7s
+        duration: 7, 
         apiObject: videoObject,
         timestamp: Date.now()
       };
@@ -154,19 +154,31 @@ export class GeminiService {
 
   static async synthesizeAudio(params: {
     prompt: string;
-    voiceName: string;
+    voiceName?: string;
+    speakers?: [SpeakerConfig, SpeakerConfig];
   }): Promise<string> {
     const ai = this.getClient();
+    
+    let speechConfig: any = {};
+    if (params.speakers && params.speakers.length === 2) {
+      speechConfig.multiSpeakerVoiceConfig = {
+        speakerVoiceConfigs: params.speakers.map(s => ({
+          speaker: s.name,
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: s.voiceId } }
+        }))
+      };
+    } else {
+      speechConfig.voiceConfig = {
+        prebuiltVoiceConfig: { voiceName: params.voiceName || 'Zephyr' }
+      };
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: params.prompt }] }],
       config: {
         responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: params.voiceName },
-          },
-        },
+        speechConfig
       },
     });
 
@@ -188,6 +200,7 @@ export class GeminiService {
     const bitsPerSample = 16;
     const header = new ArrayBuffer(44);
     const view = new DataView(header);
+    
     view.setUint32(0, 0x52494646, false); 
     view.setUint32(4, 36 + len, true);
     view.setUint32(8, 0x57415645, false); 
@@ -201,6 +214,7 @@ export class GeminiService {
     view.setUint16(34, bitsPerSample, true);
     view.setUint32(36, 0x64617461, false); 
     view.setUint32(40, len, true);
+    
     const blob = new Blob([header, bytes], { type: 'audio/wav' });
     return URL.createObjectURL(blob);
   }

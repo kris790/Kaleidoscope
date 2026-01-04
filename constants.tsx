@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { StylePreset, UserTier } from './types';
+import { StylePreset, UserTier, CameraMovement } from './types';
 
 export const STYLE_PRESETS: StylePreset[] = [
   {
@@ -59,6 +59,15 @@ export const STYLE_PRESETS: StylePreset[] = [
     thumbnail: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=300&h=200&auto=format&fit=crop',
     promptSuffix: ', vaporwave aesthetic, lo-fi, glitch art, pink and teal, retro futuristic, VHS quality'
   }
+];
+
+export const CAMERA_MOVEMENTS: CameraMovement[] = [
+  { id: 'static', name: 'Static', prompt: 'static camera, no movement' },
+  { id: 'zoom-in', name: 'Zoom In', prompt: 'slow camera zoom in' },
+  { id: 'pan-right', name: 'Pan Right', prompt: 'camera pan right' },
+  { id: 'tilt-up', name: 'Tilt Up', prompt: 'camera tilt up' },
+  { id: 'dolly-zoom', name: 'Dolly Zoom', prompt: 'cinematic dolly zoom' },
+  { id: 'orbital', name: 'Orbital', prompt: 'orbital camera movement around subject' }
 ];
 
 export const TIER_CONFIG = {
