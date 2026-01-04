@@ -3,7 +3,7 @@
   "checklist": {
     "sections": [
       {
-        "name": "📁 Core Infrastructure",
+        "name": "📁 Section 1: Core Infrastructure (Legacy)",
         "tasks": [
           {
             "id": "api_auth",
@@ -11,11 +11,8 @@
             "status": "completed",
             "assignee": "frontend_lead",
             "priority": "critical",
-            "commands": [
-              "npm run dev",
-              "ls components/ApiKeyPrompt.tsx"
-            ],
-            "verification": "Verified that window.aistudio prompts appear on initial load and handle key selection correctly.",
+            "commands": ["npm run dev"],
+            "verification": "Stable key selection.",
             "updated": "2023-10-27T10:00:00.000Z"
           },
           {
@@ -24,51 +21,34 @@
             "status": "completed",
             "assignee": "frontend_lead",
             "priority": "critical",
-            "commands": [
-              "cat services/geminiService.ts"
-            ],
-            "verification": "Confirmed polling logic for getVideosOperation correctly handles long-running generation tasks.",
+            "commands": ["cat services/geminiService.ts"],
+            "verification": "Polling logic stable.",
             "updated": "2023-10-27T10:30:00.000Z"
           }
         ]
       },
       {
-        "name": "🎨 Studio UI & Experience",
+        "name": "🚀 Phase 2: Cinematic Expansion",
         "tasks": [
           {
-            "id": "editor_controls",
-            "title": "High-Fidelity Editor Controls",
-            "status": "completed",
-            "assignee": "ui_designer",
+            "id": "video_extension",
+            "title": "Temporal Extension (7s Clips)",
+            "status": "in_progress",
+            "assignee": "frontend_lead",
             "priority": "high",
             "commands": [],
-            "verification": "Style grid and prompt inputs are functional and visually aligned with the dark theme.",
-            "updated": "2023-10-27T11:00:00.000Z"
+            "verification": "Implement video-to-video recursive generation logic.",
+            "updated": "2023-10-27T13:00:00.000Z"
           },
           {
-            "id": "audio_stack",
-            "title": "Sonic Layering (TTS)",
-            "status": "completed",
+            "id": "search_grounding",
+            "title": "Search-Grounded Visuals",
+            "status": "not_started",
             "assignee": "frontend_lead",
             "priority": "medium",
             "commands": [],
-            "verification": "PCM to WAV conversion utility allows instant playback of generated narrations.",
-            "updated": "2023-10-27T11:15:00.000Z"
-          }
-        ]
-      },
-      {
-        "name": "✨ Polish & Deployment",
-        "tasks": [
-          {
-            "id": "responsiveness",
-            "title": "Mobile UX Optimization",
-            "status": "completed",
-            "assignee": "ui_designer",
-            "priority": "high",
-            "commands": [],
-            "verification": "Collapsible sidebar and responsive preview terminal tested on iPhone 14 and iPad Pro viewports.",
-            "updated": "2023-10-27T12:00:00.000Z"
+            "verification": "Integrate googleSearch tool for factual prompt accuracy.",
+            "updated": "2023-10-27T13:00:00.000Z"
           }
         ]
       }

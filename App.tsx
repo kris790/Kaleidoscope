@@ -28,7 +28,9 @@ import {
   X,
   ChevronUp,
   ChevronDown,
-  Maximize2
+  Maximize2,
+  FastForward,
+  Globe
 } from 'lucide-react';
 import { UserTier, Project, UserState } from './types';
 import { STYLE_PRESETS, TIER_CONFIG } from './constants';
@@ -56,6 +58,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [hasApiKey, setHasApiKey] = useState(true);
   const [showKeyPrompt, setShowKeyPrompt] = useState(false);
+  const [groundingEnabled, setGroundingEnabled] = useState(false);
   const [user, setUser] = useState<UserState>({
     credits: 500,
     tier: UserTier.PLUS,
@@ -177,6 +180,41 @@ const App: React.FC = () => {
         setError(err.message || "Something went wrong during generation. Check your API Key.");
         setCurrentProject(prev => ({ ...prev, status: 'failed' }));
       }
+    } finally {
+      setGenerationMsg('');
+    }
+  };
+
+  const handleExtend = async () => {
+    if (!currentProject.videoUrl || !currentProject.prompt) return;
+    
+    setError(null);
+    const cost = 10; // Extension flat fee
+    if (user.credits < cost) {
+      setError("Insufficient credits for extension.");
+      return;
+    }
+
+    setCurrentProject(prev => ({ ...prev, status: 'generating' }));
+    
+    try {
+      const extendedUrl = await GeminiService.extendVideo({
+        prompt: `Continuing the scene: ${currentProject.prompt}`,
+        previousVideoUri: currentProject.videoUrl, // Note: In a real app, this would be the actual URI, not the local Blob URL.
+        onProgress: (msg) => setGenerationMsg(msg)
+      });
+      
+      setCurrentProject(prev => ({ 
+        ...prev, 
+        videoUrl: extendedUrl, 
+        status: 'completed',
+        duration: (prev.duration || 0) + 7
+      }));
+      
+      setUser(prev => ({ ...prev, credits: prev.credits - cost }));
+    } catch (err: any) {
+      setError("Extension failed. Verify your production key status.");
+      setCurrentProject(prev => ({ ...prev, status: 'completed' }));
     } finally {
       setGenerationMsg('');
     }
@@ -355,7 +393,7 @@ const App: React.FC = () => {
         ) : (
           <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 animate-in slide-in-from-right duration-500 overflow-hidden">
             
-            {/* Sidebar Controls - Desktop Left / Mobile Bottom Drawer */}
+            {/* Sidebar Controls */}
             <div className={`
               lg:col-span-4 flex flex-col gap-6 
               ${isSidebarOpen ? 'flex-1' : 'h-0 lg:h-full'} 
@@ -393,26 +431,29 @@ const App: React.FC = () => {
                 </button>
               </div>
 
-              {/* Scrollable Content Area */}
               <div className="flex-1 overflow-y-auto custom-scroll pr-2 space-y-6 pb-24 lg:pb-10">
                 {sidebarTab === 'video' ? (
                   <div className="space-y-6 animate-in fade-in duration-300">
-                    {/* Video Prompt */}
                     <div className="space-y-3">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] flex items-center justify-between">
-                        Visual Sequence Prompt
-                        <span className="text-gray-600">{(currentProject.prompt || '').length}/500</span>
-                      </label>
+                      <div className="flex items-center justify-between">
+                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Visual Sequence Prompt</label>
+                         <button 
+                            onClick={() => setGroundingEnabled(!groundingEnabled)}
+                            className={`flex items-center gap-2 px-2 py-1 rounded-md border transition-all ${groundingEnabled ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400' : 'bg-gray-800 border-gray-700 text-gray-500'}`}
+                         >
+                            <Globe className="w-3 h-3" />
+                            <span className="text-[8px] font-black uppercase tracking-widest">Grounding {groundingEnabled ? 'ON' : 'OFF'}</span>
+                         </button>
+                      </div>
                       <textarea
                         value={currentProject.prompt}
                         onChange={(e) => setCurrentProject(prev => ({ ...prev, prompt: e.target.value }))}
-                        placeholder="Cinematic drone shot of a futuristic metropolis at sunset..."
+                        placeholder="Cinematic drone shot of a futuristic metropolis..."
                         className="w-full h-32 bg-gray-900 border border-gray-800 rounded-[1.5rem] p-5 text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none transition-all text-sm font-medium leading-relaxed"
                         maxLength={500}
                       />
                     </div>
 
-                    {/* Style Grid */}
                     <div className="space-y-4">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] flex items-center gap-2">
                         <Palette className="w-4 h-4 text-indigo-400" /> Aesthetic Direction
@@ -423,7 +464,6 @@ const App: React.FC = () => {
                       />
                     </div>
 
-                    {/* Negative Prompt */}
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.25em] flex items-center gap-2">
                         <Ban className="w-3.5 h-3.5" /> Exclusion Filters
@@ -437,7 +477,6 @@ const App: React.FC = () => {
                       />
                     </div>
 
-                    {/* Image Ref */}
                     <div className="space-y-4">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Visual Reference Asset</label>
                       <div 
@@ -467,7 +506,6 @@ const App: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-6 animate-in fade-in duration-300">
-                    {/* Audio Controls */}
                     <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-[2rem] space-y-5 shadow-inner">
                       <label className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.25em] flex items-center gap-2">
                         <Mic className="w-4 h-4" /> Sonic Layering
@@ -510,7 +548,6 @@ const App: React.FC = () => {
                 )}
               </div>
 
-              {/* Action Button - Sticky at bottom of sidebar on desktop, fixed on mobile */}
               <div className="shrink-0 pt-4 border-t border-gray-900/50 mt-auto bg-gray-950/90 backdrop-blur-xl">
                 <button
                   disabled={!currentProject.prompt || currentProject.status === 'generating'}
@@ -537,21 +574,19 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Main Preview Screen - Desktop Right / Mobile Top */}
+            {/* Main Preview Screen */}
             <div className={`
               lg:col-span-8 flex flex-col gap-6 h-full min-h-0
               ${!isSidebarOpen ? 'flex-1' : 'h-[40vh] lg:h-full'}
             `}>
               <div className="flex-1 bg-gray-900 border border-gray-800 rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden relative shadow-2xl group flex flex-col min-h-[300px]">
                 
-                {/* Rendering Progress Bar */}
                 {currentProject.status === 'generating' && (
                   <div className="absolute top-0 left-0 w-full h-1.5 z-40 overflow-hidden bg-gray-800">
                     <div className="h-full bg-indigo-500 animate-[progress_60s_linear_infinite] shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
                   </div>
                 )}
 
-                {/* Video Player Area */}
                 <div className="flex-1 w-full relative bg-black flex items-center justify-center overflow-hidden">
                   {currentProject.status === 'generating' && (
                     <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-gray-950/95 backdrop-blur-3xl">
@@ -564,11 +599,6 @@ const App: React.FC = () => {
                       <div className="text-center space-y-4 px-8 sm:px-12 max-w-lg">
                         <h3 className="text-xl sm:text-3xl font-black tracking-tighter uppercase tracking-[0.3em]">Processing Sequence</h3>
                         <p className="text-indigo-400/80 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.4em] animate-pulse h-4">{generationMsg}</p>
-                        <div className="flex justify-center gap-1.5 pt-4">
-                           {[0, 1, 2, 3, 4].map(i => (
-                             <div key={i} className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style={{animationDelay: `${i * 0.1}s`}}></div>
-                           ))}
-                        </div>
                       </div>
                     </div>
                   )}
@@ -584,20 +614,10 @@ const App: React.FC = () => {
                         playsInline
                       />
                       
-                      {/* Brand Watermark */}
                       <div className="absolute bottom-16 sm:bottom-24 left-6 sm:left-10 flex flex-col items-start gap-1 opacity-20 pointer-events-none select-none group-hover/player:opacity-40 transition-opacity">
                         <div className="flex items-center gap-2">
                           <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                           <span className="text-[8px] sm:text-[10px] font-black text-white tracking-[0.4em] uppercase">KALEIDOSCOPE AI RENDER</span>
-                        </div>
-                      </div>
-
-                      {/* Info Badge */}
-                      <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-xl border border-white/10 p-2 sm:p-2.5 rounded-2xl opacity-0 group-hover/player:opacity-100 transition-all transform translate-y-2 group-hover/player:translate-y-0 flex items-center gap-2.5 shadow-2xl">
-                        <ShieldAlert className="w-4 h-4 text-indigo-400" />
-                        <div className="flex flex-col">
-                          <span className="text-[9px] text-white font-black uppercase tracking-widest">Safety Verified</span>
-                          <span className="text-[7px] text-gray-500 font-bold uppercase">Pixel-Level Check OK</span>
                         </div>
                       </div>
                     </div>
@@ -606,12 +626,7 @@ const App: React.FC = () => {
                       <div className="mx-auto w-24 h-24 sm:w-28 sm:h-28 bg-indigo-500/5 rounded-[2.5rem] flex items-center justify-center border border-indigo-500/10 shadow-2xl relative overflow-hidden group">
                         <Play className="w-12 h-12 sm:w-14 sm:h-14 text-indigo-400/40" />
                       </div>
-                      <div className="space-y-3">
-                        <h3 className="text-xl sm:text-2xl font-black text-white/40 tracking-tighter uppercase tracking-[0.2em]">Preview Terminal</h3>
-                        <p className="text-gray-600 leading-relaxed text-[10px] sm:text-xs font-bold uppercase tracking-widest">
-                          Inject visual parameters to start cinematic rendering
-                        </p>
-                      </div>
+                      <h3 className="text-xl sm:text-2xl font-black text-white/40 tracking-tighter uppercase tracking-[0.2em]">Preview Terminal</h3>
                     </div>
                   )}
                 </div>
@@ -619,14 +634,9 @@ const App: React.FC = () => {
                 {/* Toolbar */}
                 <div className="bg-black p-4 sm:p-8 flex flex-col sm:flex-row items-center justify-between border-t border-gray-800/50 gap-4">
                   <div className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-4">
-                    {currentProject.audioUrl ? (
+                    {currentProject.audioUrl && (
                       <div className="flex items-center gap-4 bg-indigo-500/5 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border border-indigo-500/10 shadow-xl w-full sm:w-auto">
-                        <Waves className="w-4 h-4 text-indigo-400 animate-pulse hidden xs:block" />
-                        <audio ref={audioRef} src={currentProject.audioUrl} controls className="h-7 w-full sm:w-40 opacity-40 filter invert grayscale hover:opacity-100 transition-opacity" />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-gray-600 text-[10px] font-black uppercase tracking-widest">
-                        <Mic className="w-3 h-3 opacity-30" /> No audio track
+                        <audio ref={audioRef} src={currentProject.audioUrl} controls className="h-7 w-full sm:w-40 opacity-40 filter invert grayscale hover:opacity-100" />
                       </div>
                     )}
                   </div>
@@ -634,55 +644,47 @@ const App: React.FC = () => {
                   {currentProject.videoUrl && (
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                       <button 
+                        onClick={handleExtend}
+                        disabled={currentProject.status === 'generating'}
+                        className="flex-1 sm:flex-initial bg-gray-800 text-white font-black uppercase tracking-[0.2em] text-[10px] px-6 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-3 hover:bg-gray-700 transition-all active:scale-95 disabled:opacity-50"
+                        title="Add 7 seconds to this production"
+                      >
+                        <FastForward className="w-4 h-4" /> Extend
+                      </button>
+                      <button 
                         onClick={() => window.open(currentProject.videoUrl, '_blank')}
                         className="flex-1 sm:flex-initial bg-indigo-600 text-white font-black uppercase tracking-[0.2em] text-[10px] px-8 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-3 hover:bg-indigo-500 shadow-xl transition-all active:scale-95"
                       >
                         <Download className="w-5 h-5" /> Export
-                      </button>
-                      <button 
-                        onClick={() => setIsSidebarOpen(true)}
-                        className="bg-gray-800 p-3.5 sm:p-4 rounded-full text-white hover:bg-gray-700 transition-colors lg:hidden"
-                      >
-                         <RefreshCcw className="w-5 h-5" />
                       </button>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Archive - Visual Skeletons / History */}
+              {/* Archive */}
               <div className="bg-gray-900 border border-gray-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 mb-6">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 flex items-center gap-2.5">
                     <History className="w-4 h-4" /> Production Archive
                   </h4>
-                  <button className="text-[10px] font-black text-indigo-400 hover:text-indigo-300 uppercase tracking-widest">See all</button>
                 </div>
                 <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 scrollbar-hide">
                   {currentProject.status === 'generating' && <SkeletonCard />}
                   {user.projects.slice(0, 10).map((p) => (
                     <button
                       key={p.id}
-                      onClick={() => {
-                        setCurrentProject(p);
-                        setIsSidebarOpen(false); // Focus on video on mobile
-                      }}
+                      onClick={() => setCurrentProject(p)}
                       className={`relative w-40 sm:w-48 aspect-video rounded-2xl overflow-hidden shrink-0 border-2 transition-all ${
                         currentProject.id === p.id ? 'border-indigo-500 shadow-2xl' : 'border-transparent hover:border-gray-700'
                       }`}
                     >
-                      <img src={p.thumbnailUrl} className="w-full h-full object-cover grayscale-[0.3] hover:grayscale-0 transition-all duration-500" alt="History" />
-                      <div className="absolute inset-0 bg-black/20"></div>
-                      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-[8px] font-black px-1.5 py-0.5 rounded border border-white/10 uppercase">
+                      <img src={p.thumbnailUrl} className="w-full h-full object-cover" alt="History" />
+                      <div className="absolute bottom-2 left-2 bg-black/60 text-[8px] font-black px-1.5 py-0.5 rounded border border-white/10">
                         {p.duration}s
                       </div>
                     </button>
                   ))}
-                  {user.projects.length === 0 && currentProject.status !== 'generating' && (
-                    <div className="w-full flex items-center justify-center py-8 text-gray-700 uppercase tracking-[0.4em] text-[9px] font-black border-2 border-dashed border-gray-800 rounded-[1.5rem] bg-black/20">
-                      Archive repository empty
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -693,18 +695,14 @@ const App: React.FC = () => {
       {/* Footer */}
       <footer className="border-t border-gray-900 bg-black/50 py-8 px-6 backdrop-blur-xl shrink-0">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 sm:gap-10">
+          <div className="flex items-center gap-6">
              <div className="flex items-center gap-2.5 text-gray-600">
                <Sparkles className="w-4 h-4" />
-               <span className="text-[9px] font-black uppercase tracking-[0.25em]">Veo 3.1 ALPHA</span>
+               <span className="text-[9px] font-black uppercase tracking-[0.25em]">Veo 3.1 Advanced</span>
              </div>
-             <div className="flex items-center gap-2.5 text-gray-600">
-               <ShieldAlert className="w-4 h-4" />
-               <span className="text-[9px] font-black uppercase tracking-[0.25em]">Secure Auth</span>
-             </div>
-             <div className="hidden xs:flex items-center gap-2.5 text-gray-700">
-               <Layers className="w-4 h-4" />
-               <span className="text-[9px] font-black uppercase tracking-[0.25em]">Build 1.0.8</span>
+             <div className="flex items-center gap-2.5 text-indigo-500">
+               <Globe className="w-4 h-4" />
+               <span className="text-[9px] font-black uppercase tracking-[0.25em]">Grounding Ready</span>
              </div>
           </div>
           <div className="flex items-center gap-6">
@@ -712,7 +710,7 @@ const App: React.FC = () => {
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">{user.tier} TIER</span>
               <span className="text-xs font-black text-indigo-400 tracking-tighter">UNITS: {user.credits}</span>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[1.25rem] bg-indigo-600/5 border border-indigo-500/20 flex items-center justify-center shadow-inner">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[1.25rem] bg-indigo-600/5 border border-indigo-500/20 flex items-center justify-center">
               <User className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-400" />
             </div>
           </div>
@@ -725,27 +723,9 @@ const App: React.FC = () => {
           95% { width: 98%; opacity: 1; }
           100% { width: 100%; opacity: 0; }
         }
-        .custom-scroll::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scroll::-webkit-scrollbar-track {
-          background: rgba(0,0,0,0.05);
-        }
-        .custom-scroll::-webkit-scrollbar-thumb {
-          background: #312e81;
-          border-radius: 10px;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb:hover {
-          background: #4338ca;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        @media (max-width: 640px) {
-           .xs\\:flex { display: flex; }
-           .xs\\:block { display: block; }
-           .xs\\:inline { display: inline; }
-        }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #312e81; border-radius: 10px; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );

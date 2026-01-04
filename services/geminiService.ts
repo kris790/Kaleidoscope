@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality } from "@google/genai";
 import { UserTier } from "../types";
 import { TIER_CONFIG } from "../constants";
@@ -69,6 +68,44 @@ export class GeminiService {
     }
   }
 
+  static async extendVideo(params: {
+    prompt: string;
+    previousVideoUri: string;
+    onProgress?: (msg: string) => void;
+  }): Promise<string> {
+    const ai = await this.getClient();
+    try {
+      params.onProgress?.("Analyzing previous frames...");
+      
+      let operation = await ai.models.generateVideos({
+        model: 'veo-3.1-generate-preview',
+        prompt: params.prompt,
+        video: { uri: params.previousVideoUri },
+        config: {
+          numberOfVideos: 1,
+          resolution: '720p',
+          aspectRatio: '16:9'
+        }
+      });
+
+      while (!operation.done) {
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        operation = await ai.operations.getVideosOperation({ operation: operation });
+        params.onProgress?.("Extending cinematic sequence...");
+      }
+
+      const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+      if (!downloadLink) throw new Error("Extension failed.");
+      
+      const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error("Video extension failed:", error);
+      throw error;
+    }
+  }
+
   static async generateAudio(params: {
     prompt: string;
     voiceName: string;
@@ -94,7 +131,6 @@ export class GeminiService {
         throw new Error("No audio data returned from model.");
       }
 
-      // Convert raw PCM to WAV for easier browser playback
       return this.pcmToWavUrl(base64Audio);
     } catch (error) {
       console.error("Audio generation failed:", error);
@@ -116,31 +152,18 @@ export class GeminiService {
     const header = new ArrayBuffer(44);
     const view = new DataView(header);
 
-    // RIFF identifier
-    view.setUint32(0, 0x52494646, false); // "RIFF"
-    // file length
+    view.setUint32(0, 0x52494646, false); 
     view.setUint32(4, 36 + len, true);
-    // RIFF type
-    view.setUint32(8, 0x57415645, false); // "WAVE"
-    // format chunk identifier
-    view.setUint32(12, 0x666d7420, false); // "fmt "
-    // format chunk length
+    view.setUint32(8, 0x57415645, false); 
+    view.setUint32(12, 0x666d7420, false); 
     view.setUint32(16, 16, true);
-    // sample format (raw)
     view.setUint16(20, 1, true);
-    // channel count
     view.setUint16(22, numChannels, true);
-    // sample rate
     view.setUint32(24, sampleRate, true);
-    // byte rate (sample rate * block align)
     view.setUint32(28, sampleRate * numChannels * (bitsPerSample / 8), true);
-    // block align (channel count * bytes per sample)
     view.setUint16(32, numChannels * (bitsPerSample / 8), true);
-    // bits per sample
     view.setUint16(34, bitsPerSample, true);
-    // data chunk identifier
-    view.setUint32(36, 0x64617461, false); // "data"
-    // data chunk length
+    view.setUint32(36, 0x64617461, false); 
     view.setUint32(40, len, true);
 
     const blob = new Blob([header, bytes], { type: 'audio/wav' });
