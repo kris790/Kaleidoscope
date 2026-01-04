@@ -23,7 +23,9 @@ import {
   Mic,
   Music,
   Waves,
-  Palette
+  Palette,
+  ShieldAlert,
+  Loader2
 } from 'lucide-react';
 import { UserTier, Project, UserState } from './types';
 import { STYLE_PRESETS, TIER_CONFIG } from './constants';
@@ -38,6 +40,12 @@ const VOICES = [
   { id: 'Zephyr', name: 'Zephyr', desc: 'Smooth & Warm' },
   { id: 'Fenrir', name: 'Fenrir', desc: 'Rugged & Bold' }
 ];
+
+const SkeletonCard = () => (
+  <div className="w-40 aspect-video rounded-xl bg-gray-900 overflow-hidden animate-pulse">
+    <div className="w-full h-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900"></div>
+  </div>
+);
 
 const App: React.FC = () => {
   const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
@@ -267,12 +275,12 @@ const App: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {user.projects.map((project) => (
-                  <div key={project.id} className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden group hover:border-indigo-500/50 transition-all flex flex-col">
-                    <div className="relative aspect-video overflow-hidden">
+                  <div key={project.id} className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden group hover:border-indigo-500/50 transition-all flex flex-col shadow-xl">
+                    <div className="relative aspect-video overflow-hidden bg-black">
                       <img 
                         src={project.thumbnailUrl} 
                         alt={project.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                         <button 
@@ -294,6 +302,10 @@ const App: React.FC = () => {
                       <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest border border-white/10">
                         {project.duration}s | {project.resolution} {project.audioUrl && '| 🔊'}
                       </div>
+                      {/* Dashboard Watermark */}
+                      <div className="absolute top-2 left-2 text-[8px] font-black text-white/40 tracking-[0.2em] pointer-events-none uppercase">
+                        K-SCOPE AI
+                      </div>
                     </div>
                     <div className="p-4 flex-1 flex flex-col gap-1">
                       <h3 className="font-bold text-lg line-clamp-1">{project.title}</h3>
@@ -301,7 +313,7 @@ const App: React.FC = () => {
                         <Clock className="w-3 h-3" /> {new Date(project.createdAt).toLocaleDateString()}
                       </p>
                       <div className="mt-4 flex items-center justify-between">
-                        <div className="bg-gray-800 px-2 py-1 rounded text-[10px] font-bold uppercase text-gray-400">
+                        <div className="bg-gray-800 px-2 py-1 rounded text-[10px] font-bold uppercase text-gray-400 border border-gray-700">
                           {project.style}
                         </div>
                         <button 
@@ -462,8 +474,8 @@ const App: React.FC = () => {
                 >
                   {currentProject.status === 'generating' ? (
                     <>
-                      <RefreshCcw className="w-5 h-5 animate-spin" />
-                      {generationMsg || 'Processing...'}
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Processing...
                     </>
                   ) : (
                     <>
@@ -480,40 +492,59 @@ const App: React.FC = () => {
             <div className="lg:col-span-8 flex flex-col h-full space-y-6">
               <div className="flex-1 bg-gray-900 border border-gray-800 rounded-[2.5rem] overflow-hidden relative shadow-2xl group flex flex-col">
                 
-                {/* Video Player */}
+                {/* Generation Progress Bar */}
+                {currentProject.status === 'generating' && (
+                  <div className="absolute top-0 left-0 w-full h-1 z-20 overflow-hidden">
+                    <div className="h-full bg-indigo-500 animate-[progress_30s_ease-in-out_infinite]"></div>
+                  </div>
+                )}
+
+                {/* Video Player Area */}
                 <div className="flex-1 w-full relative bg-black flex items-center justify-center">
                   {currentProject.status === 'generating' && (
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-900/90 backdrop-blur-xl">
                       <div className="relative mb-8">
-                        <div className="w-24 h-24 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <div className="w-32 h-32 border-4 border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin"></div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <Sparkles className="w-8 h-8 text-indigo-400 animate-pulse" />
+                          <Sparkles className="w-10 h-10 text-indigo-400 animate-pulse" />
                         </div>
                       </div>
-                      <div className="text-center space-y-2">
-                        <h3 className="text-2xl font-bold tracking-tight text-white">Crafting Masterpiece</h3>
-                        <p className="text-indigo-400 font-medium animate-pulse">{generationMsg}</p>
+                      <div className="text-center space-y-3 px-8">
+                        <h3 className="text-2xl font-bold tracking-tight text-white uppercase tracking-[0.2em]">Crafting Scene</h3>
+                        <p className="text-indigo-400/80 font-mono text-xs uppercase tracking-widest">{generationMsg}</p>
                       </div>
                     </div>
                   )}
 
                   {currentProject.videoUrl ? (
-                    <video 
-                      src={currentProject.videoUrl} 
-                      className="w-full h-full object-contain"
-                      controls
-                      autoPlay
-                      loop
-                    />
-                  ) : (
+                    <div className="relative w-full h-full group">
+                      <video 
+                        src={currentProject.videoUrl} 
+                        className="w-full h-full object-contain"
+                        controls
+                        autoPlay
+                        loop
+                      />
+                      {/* Visual Watermark (Safety) */}
+                      <div className="absolute bottom-16 left-8 flex items-center gap-2 opacity-30 pointer-events-none select-none">
+                        <Sparkles className="w-4 h-4 text-white" />
+                        <span className="text-[10px] font-black text-white tracking-[0.3em] uppercase">KALEIDOSCOPE AI</span>
+                      </div>
+                      {/* Safety Alert (Internal) */}
+                      <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md border border-white/10 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 pointer-events-none">
+                        <ShieldAlert className="w-3.5 h-3.5 text-indigo-400" />
+                        <span className="text-[10px] text-gray-300 font-bold">Safety Moderated V1.0</span>
+                      </div>
+                    </div>
+                  ) : currentProject.status !== 'generating' && (
                     <div className="text-center space-y-6 p-12 max-w-md">
-                      <div className="mx-auto w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center">
-                        <Play className="w-12 h-12 text-indigo-400 fill-indigo-400" />
+                      <div className="mx-auto w-24 h-24 bg-indigo-500/5 rounded-full flex items-center justify-center border border-indigo-500/10">
+                        <Play className="w-12 h-12 text-indigo-400/30" />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-white">Preview Window</h3>
-                        <p className="text-gray-500 leading-relaxed">
-                          Enter your creative prompt on the left to begin the generation process.
+                        <h3 className="text-xl font-bold text-white/50">Preview Monitor</h3>
+                        <p className="text-gray-600 leading-relaxed text-sm font-medium">
+                          Select a style and enter a prompt to begin rendering your high-fidelity clip.
                         </p>
                       </div>
                     </div>
@@ -526,10 +557,10 @@ const App: React.FC = () => {
                     {currentProject.audioUrl && (
                       <div className="flex items-center gap-3 bg-indigo-500/10 px-4 py-2 rounded-full border border-indigo-500/20">
                         <div className="flex gap-1 items-center">
-                          <Waves className="w-4 h-4 text-indigo-400" />
-                          <span className="text-xs font-bold text-indigo-300 uppercase tracking-tighter">Audio Track</span>
+                          <Waves className="w-4 h-4 text-indigo-400 animate-pulse" />
+                          <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Audio</span>
                         </div>
-                        <audio ref={audioRef} src={currentProject.audioUrl} controls className="h-8 w-48 opacity-80" />
+                        <audio ref={audioRef} src={currentProject.audioUrl} controls className="h-8 w-48 opacity-80 filter invert grayscale" />
                       </div>
                     )}
                   </div>
@@ -538,36 +569,42 @@ const App: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={() => window.open(currentProject.videoUrl, '_blank')}
-                        className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-full flex items-center gap-2 hover:bg-indigo-500 shadow-xl transition-all"
+                        className="bg-indigo-600 text-white font-bold px-8 py-3 rounded-full flex items-center gap-2 hover:bg-indigo-500 shadow-xl transition-all hover:scale-105 active:scale-95"
                       >
-                        <Download className="w-5 h-5" /> Export MP4
+                        <Download className="w-5 h-5" /> Export Master
                       </button>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* History Bar */}
+              {/* History Bar with Skeletons */}
               <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                    <History className="w-4 h-4" /> Recent Works
+                    <History className="w-4 h-4" /> Production History
                   </h4>
-                  <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300">View All</button>
+                  <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300">View All Archive</button>
                 </div>
                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                  {currentProject.status === 'generating' && <SkeletonCard />}
                   {user.projects.slice(0, 8).map((p) => (
                     <button
                       key={p.id}
                       onClick={() => setCurrentProject(p)}
                       className={`relative w-40 aspect-video rounded-xl overflow-hidden shrink-0 border-2 transition-all ${
-                        currentProject.id === p.id ? 'border-indigo-500' : 'border-transparent hover:border-gray-700'
+                        currentProject.id === p.id ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-transparent hover:border-gray-700'
                       }`}
                     >
-                      <img src={p.thumbnailUrl} className="w-full h-full object-cover" alt="History" />
+                      <img src={p.thumbnailUrl} className="w-full h-full object-cover grayscale-[0.5] hover:grayscale-0 transition-all" alt="History" />
+                      <div className="absolute top-1 left-1 bg-black/40 text-[8px] font-bold px-1 rounded border border-white/5">{p.duration}s</div>
                     </button>
                   ))}
-                  {user.projects.length === 0 && <div className="w-full flex items-center justify-center py-4 text-gray-600 italic text-sm">No recent generations</div>}
+                  {user.projects.length === 0 && currentProject.status !== 'generating' && (
+                    <div className="w-full flex items-center justify-center py-4 text-gray-700 uppercase tracking-widest text-[10px] font-black border border-dashed border-gray-800 rounded-xl">
+                      No Assets in Library
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -578,18 +615,45 @@ const App: React.FC = () => {
       {/* Footer */}
       <footer className="border-t border-gray-900 bg-black/30 py-8 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">Powered by Gemini Engine</span>
+          <div className="flex items-center gap-6">
+             <div className="flex items-center gap-2 text-gray-600">
+               <Sparkles className="w-4 h-4" />
+               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Engine: Gemini Veo 3.1</span>
+             </div>
+             <div className="flex items-center gap-2 text-gray-600">
+               <ShieldAlert className="w-4 h-4" />
+               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Safety: Active</span>
+             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center">
-              <User className="w-4 h-4 text-indigo-400" />
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{user.tier} ACCOUNT</span>
+              <span className="text-xs font-bold text-indigo-400">CREDITS: {user.credits}</span>
             </div>
-            <span className="text-sm font-semibold">{user.tier} Plan</span>
+            <div className="w-10 h-10 rounded-full bg-indigo-600/10 border border-indigo-600/20 flex items-center justify-center">
+              <User className="w-5 h-5 text-indigo-400" />
+            </div>
           </div>
         </div>
       </footer>
+
+      <style>{`
+        @keyframes progress {
+          0% { width: 0%; opacity: 1; }
+          90% { width: 95%; opacity: 1; }
+          100% { width: 100%; opacity: 0; }
+        }
+        .custom-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background: #1f2937;
+          border-radius: 10px;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };
